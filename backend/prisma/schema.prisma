@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  //url      = env("DATABASE_URL")
+}
+
+model Torneo {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  disciplina  String
+  tipo        String
+  formato     String
+  categoria   String?
+  temporada   String?
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+  estado      String   @default("planificado")
+  reglas      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  equipos   Equipo[]
+  partidos  Partido[]
+  fixtures  Fixture[]
+}
+
+model Equipo {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  carrera    String?
+  torneoId   Int
+  createdAt  DateTime @default(now())
+
+  torneo     Torneo   @relation(fields: [torneoId], references: [id])
+  jugadores  EquipoJugador[]
+  partidosLocal    Partido[] @relation("Local")
+  partidosVisitante Partido[] @relation("Visitante")
+}
+
+model EquipoJugador {
+  id               Int      @id @default(autoincrement())
+  equipoId         Int
+  deportistaId     Int
+  numeroCamiseta   Int?
+  posicion         String?
+  fechaInscripcion DateTime @default(now())
+  fechaBaja        DateTime?
+  habilitado       Boolean  @default(true)
+
+  equipo     Equipo   @relation(fields: [equipoId], references: [id])
+}
+
+model Partido {
+  id               Int      @id @default(autoincrement())
+  torneoId         Int
+  equipoLocalId    Int
+  equipoVisitanteId Int
+  fecha            DateTime
+  hora             String
+  jornada          Int?
+  golesLocal       Int      @default(0)
+  golesVisitante   Int      @default(0)
+  estado           String   @default("programado")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  torneo          Torneo   @relation(fields: [torneoId], references: [id])
+  equipoLocal     Equipo   @relation("Local", fields: [equipoLocalId], references: [id])
+  equipoVisitante Equipo   @relation("Visitante", fields: [equipoVisitanteId], references: [id])
+}
+
+model Fixture {
+  id        Int      @id @default(autoincrement())
+  torneoId  Int
+  jornada   Int
+  fecha     DateTime?
+  createdAt DateTime @default(now())
+
+  torneo    Torneo   @relation(fields: [torneoId], references: [id])
+}
+
+model Categoria {
+  id          Int     @id @default(autoincrement())
+  nombre      String  @unique
+  descripcion String?
+  edadMin     Int?
+  edadMax     Int?
+  activo      Boolean @default(true)
+}
+
+model Asistencia {
+  id           Int      @id @default(autoincrement())
+  deportistaId Int
+  equipoId     Int
+  fecha        DateTime
+  presente     Boolean  @default(false)
+  observacion  String?
+  createdAt    DateTime @default(now())
+}
