@@ -12,7 +12,7 @@ export default function Header() {
             <img
               src={logoUCB}
               alt="Logo UCB"
-              className="h-11 w-11 object-contain rounded-full bg-white p-0.5"
+              className="h-11 w-11 object-contain rounded-full p-0.5"
             />
             <div>
               <h1 className="text-base font-bold leading-tight tracking-tight">
