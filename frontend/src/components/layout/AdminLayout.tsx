@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-[#f0f4f8] flex flex-col">
 
       {/* ── Header — estilo figma: logo izq, usuario der ── */}
-      <header className="bg-[#1e3a8a] text-white sticky top-0 z-50">
+      <header className="bg-[#052845] text-white sticky top-0 z-50">
         <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
 
           {/* Logo + título */}

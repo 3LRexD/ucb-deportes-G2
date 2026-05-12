@@ -25,7 +25,7 @@ export default function DelegadoLayout({ children }: DelegadoLayoutProps) {
     <div className="min-h-screen bg-[#fdfbf5] flex flex-col">
 
       {/* ── Header — fondo oscuro, acento dorado UCB ── */}
-      <header className="bg-[#1a1a2e] text-white sticky top-0 z-50">
+      <header className="bg-[#FFCC00] text-white sticky top-0 z-50">  
         <div className="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
 
           {/* Logo + título */}
@@ -40,7 +40,7 @@ export default function DelegadoLayout({ children }: DelegadoLayoutProps) {
               <h1 className="font-bold text-[15px] leading-tight tracking-tight text-white">
                 Sistema de Gestión Deportiva UCB
               </h1>
-              <p className="text-[11px] text-[#f5c518] uppercase tracking-widest mt-0.5 opacity-80">
+              <p className="text-[11px] text-[#000000] uppercase tracking-widest mt-0.5 opacity-80">
                 Portal del Delegado
               </p>
             </div>

@@ -1,9 +1,22 @@
+// App.tsx — Enrutamiento principal
+// Sprint 1: rutas base para Admin y Delegado
+//
+// ESTRUCTURA DE RUTAS:
+//   /admin/*    → AdminLayout  (rol: admin, entrenador)
+//   /delegado/* → DelegadoLayout (rol: delegado)
+//
+// TODO: cuando OAuth2 esté listo (Grupo 1), agregar ProtectedRoute:
+//   <ProtectedRoute roles={['admin']}> ... </ProtectedRoute>
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '@/components/layout/AdminLayout';
 import DelegadoLayout from '@/components/layout/DelegadoLayout';
 
-// Páginas Admin
-import EquiposPage from '@/pages/admin/EquiposPage';
+// Páginas Admin — Sprint 1
+import EquiposPage    from '@/pages/admin/EquiposPage';
+// Páginas Admin — Sprint 2
+import TorneosPage    from '@/pages/admin/TorneosPage';
+import ResultadosPage from '@/pages/admin/Resultadospage';
 
 // Páginas Delegado
 import MiEquipoPage from '@/pages/delegado/MiEquipoPage';
@@ -25,27 +38,27 @@ export default function App() {
         {/* Redirect raíz */}
         <Route path="/" element={<Navigate to="/admin/equipos" replace />} />
 
-        {/* ── RUTAS ADMIN ─── */}
+        {/* ── RUTAS ADMIN ────────────────────────────────── */}
         <Route
           path="/admin/*"
           element={
             <AdminLayout>
               <Routes>
                 <Route path="equipos"       element={<EquiposPage />} />
-                <Route path="torneos"       element={<Placeholder titulo="Torneos" />} />
+                <Route path="torneos"       element={<TorneosPage />} />
                 <Route path="inscripciones" element={<Placeholder titulo="Inscripciones" />} />
                 <Route path="fixtures"      element={<Placeholder titulo="Fixtures" />} />
-                <Route path="resultados"    element={<Placeholder titulo="Resultados" />} />
+                <Route path="resultados"    element={<ResultadosPage />} />
                 <Route path="tabla"         element={<Placeholder titulo="Tabla de Posiciones" />} />
                 <Route path="calendario"    element={<Placeholder titulo="Calendario" />} />
                 <Route path="config"        element={<Placeholder titulo="Configuración" />} />
-                <Route path="*"             element={<Navigate to="equipos" replace />} />
+                <Route path="*"             element={<Navigate to="torneos" replace />} />
               </Routes>
             </AdminLayout>
           }
         />
 
-        {/* ── RUTAS DELEGADO ──── */}
+        {/* ── RUTAS DELEGADO ─────────────────────────────── */}
         <Route
           path="/delegado/*"
           element={
