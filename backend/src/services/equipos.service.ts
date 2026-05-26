@@ -9,14 +9,14 @@ export class EquiposService {
     });
   }
 
-  async createEquipo(data: { nombre: string; carrera: string; torneoId: number; delegadoId?: number; entrenadorId?: number }) {
+  async createEquipo(data: { nombre: string; carreraId?: number; torneoId: number; delegadoId?: number; entrenadorId?: number }) {
     return await prisma.equipo.create({
       data,
       include: { jugadores: true },
     });
   }
 
-  async addJugador(data: { equipoId: number; deportistaId: number; deportistaCi: string; deportistaNombre: string; numeroCamiseta?: string; posicion?: string }) {
+  async addJugador(data: { equipoId: number; deportistaId: number; deportistaCi: string; deportistaNombre: string; numeroCamiseta?: number; posicion?: string }) {
     return await prisma.equipoJugador.create({
       data: {
         ...data,

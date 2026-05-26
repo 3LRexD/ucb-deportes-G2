@@ -14,10 +14,10 @@ export class EquiposController {
 
   async createEquipo(req: Request, res: Response) {
     try {
-      const { nombre, carrera, torneoId, delegadoId, entrenadorId } = req.body;
+      const { nombre, carreraId, torneoId, delegadoId, entrenadorId } = req.body;
       const equipo = await equiposService.createEquipo({
         nombre,
-        carrera,
+        carreraId: carreraId ? Number(carreraId) : undefined,
         torneoId: Number(torneoId),
         delegadoId,
         entrenadorId
@@ -48,7 +48,7 @@ export class EquiposController {
 
   async removeJugador(req: Request, res: Response) {
     try {
-      await equiposService.removeJugador(Number(req.params.id), req.params.ci);
+      await equiposService.removeJugador(Number(req.params.id), String(req.params.ci));
       res.json({ message: 'Jugador removido del equipo' });
     } catch (error) {
       res.status(500).json({ error: 'Error al remover jugador' });

@@ -28,6 +28,7 @@ export class TorneosService {
     return await prisma.torneo.create({
       data: {
         ...data,
+        temporada: data.temporada ?? '',
         estado: data.estado ?? 'planificado',
       },
       include: { disciplina: true, categoria: true },

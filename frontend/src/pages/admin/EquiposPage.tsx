@@ -1,306 +1,11 @@
 import { useState, useEffect } from 'react';
-import { api } from '@/services/api';
-import { Plus, Search, Users, ChevronDown, ChevronUp, CheckCircle, XCircle, UserPlus, X, Trophy } from 'lucide-react';
-import {mockJugadores } from '@/data/mockData';
-import type { Equipo, Jugador } from '@/types';
+import { Plus, Search, Users } from 'lucide-react';
+import { equiposService } from '@/services/equipos.service';
+import type { Equipo } from '@/types';
+import { EquipoCard } from '@/components/admin/Equipos/EquipoCard';
+import { ModalCrearEquipo } from '@/components/admin/Equipos/ModalCrearEquipo';
+import { ModalAgregarJugador } from '@/components/admin/Equipos/ModalAgregarJugador';
 
-// ─── Modal: Crear nuevo equipo 
-function ModalCrearEquipo({ onClose, onCrear }: {
-  onClose: () => void;
-  onCrear: (equipo: Partial<Equipo>) => void;
-}) {
-  const [form, setForm] = useState({ nombre: '', carreraId: 0, delegado_nombre: '' });
-  const [torneosDB, setTorneosDB] = useState<{id: number, nombre: string}[]>([]);
-  const [torneoId, setTorneoId] = useState<number | ''>('');
-  const [carrerasDB, setCarrerasDB] = useState<{id: number, nombre: string, facultad: string}[]>([]);
-
-  useEffect(() => {
-    api.get('/torneos').then(setTorneosDB).catch(console.error);
-    api.get('/carreras').then(setCarrerasDB).catch(console.error);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.carreraId || !torneoId) return;
-    onCrear({
-      nombre:          form.nombre || `Equipo ${carrerasDB.find(c => c.id === form.carreraId)?.nombre}`,
-      carrera:         carrerasDB.find(c => c.id === form.carreraId)?.nombre ?? '',
-      delegado_nombre: form.delegado_nombre,
-      jugadores:       [],
-      torneo_id:       Number(torneoId),
-    });
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="font-bold text-gray-800 text-lg">Registrar Equipo — Intercarreras 2026</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Carrera *</label>
-            <select
-              required
-              value={form.carreraId}
-              onChange={e => setForm({ ...form, carreraId: Number(e.target.value) })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccionar carrera...</option>
-              {carrerasDB.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Torneo *</label>
-            <select
-              required
-              value={torneoId}
-              onChange={e => setTorneoId(Number(e.target.value))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Seleccionar torneo...</option>
-              {torneosDB.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del equipo</label>
-            <input
-              type="text"
-              value={form.nombre}
-              onChange={e => setForm({ ...form, nombre: e.target.value })}
-              placeholder="Se auto-completa con la carrera"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Delegado responsable</label>
-            <input
-              type="text"
-              value={form.delegado_nombre}
-              onChange={e => setForm({ ...form, delegado_nombre: e.target.value })}
-              placeholder="Nombre del delegado"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {/* TODO: cuando el auth esté listo, mostrar lista de usuarios con rol=delegado */}
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-              Cancelar
-            </button>
-            <button type="submit" className="flex-1 py-2 bg-[#1a3a6b] text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors">
-              Crear Equipo
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ─── Modal: Agregar jugador a un equipo ──
-function ModalAgregarJugador({ equipo, onClose, onAgregar }: {
-  equipo: Equipo;
-  onClose: () => void;
-  onAgregar: (ci: string) => void;
-}) {
-  const [ci, setCi] = useState('');
-  const [resultado, setResultado] = useState<Jugador | null | 'no_encontrado'>(null);
-
-  // TODO: Reemplazar con llamada real: GET /api/deportistas?ci={ci}
-  // + GET /api/academico/validar/{ci} para verificar matrícula
-  const buscarJugador = () => {
-    if (!ci.trim()) return;
-    const encontrado = mockJugadores.find(j => j.ci === ci.trim());
-    setResultado(encontrado || 'no_encontrado');
-  };
-
-  const yaInscrito = resultado && resultado !== 'no_encontrado'
-    ? equipo.jugadores.some(j => j.ci === (resultado as Jugador).ci)
-    : false;
-
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div>
-            <h2 className="font-bold text-gray-800">Agregar Jugador</h2>
-            <p className="text-xs text-gray-500">{equipo.nombre} — {equipo.carrera}</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-        </div>
-
-        <div className="px-6 py-5 space-y-4">
-          {/* Búsqueda por CI */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por CI del estudiante</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={ci}
-                onChange={e => { setCi(e.target.value); setResultado(null); }}
-                onKeyDown={e => e.key === 'Enter' && buscarJugador()}
-                placeholder="Ej: 1234567"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={buscarJugador}
-                className="px-4 py-2 bg-[#1a3a6b] text-white rounded-lg text-sm hover:bg-blue-800 transition-colors"
-              >
-                <Search size={14} />
-              </button>
-            </div>
-          </div>
-
-          {/* Resultado de búsqueda */}
-          {resultado === 'no_encontrado' && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-              <XCircle size={16} className="text-red-500 shrink-0" />
-              <p className="text-sm text-red-700">No se encontró ningún estudiante con CI <strong>{ci}</strong>.</p>
-            </div>
-          )}
-
-          {resultado && resultado !== 'no_encontrado' && (
-            <div className={`rounded-lg border px-4 py-3 space-y-2 ${
-              resultado.matricula_activa ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-gray-800 text-sm">{resultado.nombre_completo}</p>
-                  <p className="text-xs text-gray-500">CI: {resultado.ci} • {resultado.carrera}</p>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                  resultado.tipo === 'UCB' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {resultado.tipo}
-                </span>
-              </div>
-
-              {/* Validación de matrícula (simulada) */}
-              <div className={`flex items-center gap-1.5 text-xs font-medium ${
-                resultado.matricula_activa ? 'text-green-700' : 'text-red-700'
-              }`}>
-                {resultado.matricula_activa
-                  ? <><CheckCircle size={13} /> Matrícula activa — habilitado para inscribirse</>
-                  : <><XCircle size={13} /> Sin matrícula activa — no puede inscribirse</>
-                }
-              </div>
-              {/* TODO: cuando el sistema académico UCB esté disponible (Sprint 4),
-                   reemplazar este estado con la respuesta real de:
-                   GET /api/academica/estudiante/{ci} → { matricula_activa: boolean } */}
-
-              {yaInscrito && (
-                <p className="text-xs text-orange-700 font-medium">⚠️ Este jugador ya está en la lista del equipo.</p>
-              )}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-              Cancelar
-            </button>
-            <button
-              onClick={() => {
-                if (resultado && resultado !== 'no_encontrado' && resultado.matricula_activa && !yaInscrito) {
-                  onAgregar(resultado.ci);
-                  onClose();
-                }
-              }}
-              disabled={!resultado || resultado === 'no_encontrado' || !(resultado as Jugador).matricula_activa || yaInscrito}
-              className="flex-1 py-2 bg-[#1a3a6b] text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Agregar al equipo
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Card de equipo expandible ────────────────────────────────────────────────
-function EquipoCard({ equipo, onAgregarJugador }: {
-  equipo: Equipo;
-  onAgregarJugador: (equipo: Equipo) => void;
-}) {
-  const [expandido, setExpandido] = useState(false);
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <button
-        onClick={() => setExpandido(!expandido)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#1a3a6b]/10 rounded-xl flex items-center justify-center">
-            <Trophy size={18} className="text-[#1a3a6b]" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-800">{equipo.nombre}</p>
-            <p className="text-xs text-gray-500">{equipo.carrera}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-gray-700">{equipo.jugadores.length} jugadores</p>
-            <p className="text-xs text-gray-400">Delegado: {equipo.delegado_nombre || 'Sin asignar'}</p>
-          </div>
-          {expandido ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-        </div>
-      </button>
-
-      {expandido && (
-        <div className="border-t border-gray-100 px-5 py-4">
-          {equipo.jugadores.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">Sin jugadores inscritos aún.</p>
-          ) : (
-            <table className="w-full text-sm mb-4">
-              <thead>
-                <tr className="text-xs text-gray-400 uppercase tracking-wide">
-                  <th className="text-left pb-2">CI</th>
-                  <th className="text-left pb-2">Nombre</th>
-                  <th className="text-left pb-2">Tipo</th>
-                  <th className="text-left pb-2">Matrícula</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {equipo.jugadores.map(j => (
-                  <tr key={j.ci} className="hover:bg-gray-50">
-                    <td className="py-2 font-mono text-xs text-gray-500">{j.ci}</td>
-                    <td className="py-2 font-medium text-gray-800">{j.nombre_completo}</td>
-                    <td className="py-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        j.tipo === 'UCB' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                      }`}>{j.tipo}</span>
-                    </td>
-                    <td className="py-2">
-                      {j.matricula_activa
-                        ? <CheckCircle size={14} className="text-green-500" />
-                        : <XCircle size={14} className="text-red-400" />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <button
-            onClick={() => onAgregarJugador(equipo)}
-            className="flex items-center gap-2 text-sm text-[#1a3a6b] hover:text-blue-800 font-medium"
-          >
-            <UserPlus size={14} /> Agregar jugador por CI
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Página principal ─
 export default function EquiposPage() {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [busqueda, setBusqueda] = useState('');
@@ -308,26 +13,14 @@ export default function EquiposPage() {
   const [equipoParaAgregar, setEquipoParaAgregar] = useState<Equipo | null>(null);
 
   useEffect(() => {
-    api.get('/equipos')
-      .then(data => setEquipos(data.map(mapearEquipo)))
-      .catch(console.error);
+    cargarEquipos();
   }, []);
 
-  const mapearEquipo = (e: any): Equipo => ({
-    id:              e.id,
-    nombre:          e.nombre,
-    carrera:         e.carrera?.nombre ?? '',
-    carrera_id:      e.carreraId,        // ← agregar
-    delegado_id:     e.delegadoId ?? 0,
-    delegado_nombre: e.delegadoNombre ?? '',
-    torneo_id:       e.torneoId,
-    jugadores:       e.jugadores?.map((j: any) => ({
-      ci:               j.deportistaCi,
-      nombre_completo:  j.deportistaNombre,
-      tipo:             'UCB' as const,
-      matricula_activa: j.matriculaValidada,
-    })) ?? [],
-  });
+  const cargarEquipos = () => {
+    equiposService.getAll()
+      .then(setEquipos)
+      .catch(console.error);
+  };
 
   const equiposFiltrados = equipos.filter(e =>
     e.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -335,26 +28,19 @@ export default function EquiposPage() {
   );
 
   const crearEquipo = async (datos: Partial<Equipo>) => {
-    const nuevo = await api.post('/equipos', {
-      nombre:    datos.nombre,
-      carreraId: datos.carrera_id,  
-      torneoId:  datos.torneo_id,
-      delegadoId: datos.delegado_id,
-    });
-    setEquipos([...equipos, mapearEquipo(nuevo)]);
+    await equiposService.create(datos);
+    cargarEquipos();
   };
 
   const agregarJugador = async (equipoId: number, ci: string) => {
-    const jugador = mockJugadores.find(j => j.ci === ci);
-    if (!jugador) return;
-    await api.post(`/equipos/${equipoId}/jugadores`, {
-      deportistaId:    0,
-      deportistaCi:    jugador.ci,
-      deportistaNombre: jugador.nombre_completo,
-    });
-    // Refrescar equipos
-    const data = await api.get('/equipos');
-    setEquipos(data.map(mapearEquipo));
+    // Importamos dinámicamente para simular la búsqueda
+    const mockModule = await import('@/data/mockData');
+    const jugadorEncontrado = mockModule.mockJugadores.find(j => j.ci === ci);
+    
+    if (!jugadorEncontrado) return;
+
+    await equiposService.agregarJugador(equipoId, jugadorEncontrado);
+    cargarEquipos();
   };
 
   return (
