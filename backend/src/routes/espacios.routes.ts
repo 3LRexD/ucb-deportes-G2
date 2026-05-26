@@ -1,18 +1,8 @@
 import { Router } from 'express';
-import prisma from '../prisma';
+import { espaciosController } from '../controllers/espacios.controller';
 
 const router = Router();
 
-router.get('/', async (_req, res) => {
-  try {
-    const espacios = await prisma.espacio.findMany({
-      where: { activo: true },
-      orderBy: { nombre: 'asc' },
-    });
-    res.json(espacios);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener espacios' });
-  }
-});
+router.get('/', espaciosController.getEspacios);
 
 export default router;

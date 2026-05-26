@@ -1,18 +1,8 @@
 import { Router } from 'express';
-import prisma from '../prisma';
+import { carrerasController } from '../controllers/carreras.controller';
 
 const router = Router();
 
-router.get('/', async (_req, res) => {
-  try {
-    const carreras = await prisma.carrera.findMany({
-      where:   { activo: true },
-      orderBy: { nombre: 'asc' },
-    });
-    res.json(carreras);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener carreras' });
-  }
-});
+router.get('/', carrerasController.getCarreras);
 
 export default router;
