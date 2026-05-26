@@ -1,14 +1,11 @@
-// pages/admin/TorneosPage.tsx
-// HU-GES-06: Gestionar torneos y competencias
-// Crear torneo: nombre, disciplina, fechas, formato / Estado
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Plus, Trophy, Calendar, ChevronDown, ChevronUp,
   X, Users, Clock, CheckCircle, AlertCircle, Ban, PlayCircle,
 } from 'lucide-react';
 import { mockTorneos, mockDisciplinas, mockEquipos } from '@/data/mockData';
 import type { Torneo } from '@/types';
+import { api } from '@/services/api';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const ESTADO_CONFIG = {
@@ -45,6 +42,7 @@ function BadgeEstado({ estado }: { estado: Torneo['estado'] }) {
 interface FormTorneo {
   nombre: string;
   disciplina_id: string;
+  categoria_id: string;
   tipo: string;
   formato: string;
   categoria: string;
@@ -56,13 +54,11 @@ interface FormTorneo {
 }
 
 const FORM_INICIAL: FormTorneo = {
-  nombre: '', disciplina_id: '', tipo: 'intercarreras',
-  formato: 'liga', categoria: 'Mayor', temporada: '2026',
-  fecha_inicio: '', fecha_fin: '', estado: 'planificado', reglas: '',
+  nombre: '', disciplina_id: '', categoria_id: '',
+  tipo: 'intercarreras', formato: '', categoria: '', temporada: '',
+  fecha_inicio: '', fecha_fin: '', estado: '', reglas: ''
 };
 
-// ⚠️ Definido FUERA del modal — si estuviera adentro React lo re-crea
-// en cada render y el campo pierde el foco después de cada letra
 function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
@@ -83,19 +79,26 @@ function ModalTorneo({
   const [form, setForm] = useState<FormTorneo>(
     torneo
       ? {
-          nombre: torneo.nombre,
+          nombre:        torneo.nombre,
           disciplina_id: String(torneo.disciplina_id),
-          tipo: torneo.tipo,
-          formato: torneo.formato,
-          categoria: torneo.categoria,
-          temporada: torneo.temporada,
-          fecha_inicio: torneo.fecha_inicio,
-          fecha_fin: torneo.fecha_fin,
-          estado: torneo.estado,
-          reglas: torneo.reglas || '',
+          categoria_id:  String(torneo.categoria_id ?? ''),
+          tipo:          torneo.tipo,
+          formato:       torneo.formato,
+          categoria:     torneo.categoria,
+          temporada:     torneo.temporada,
+          fecha_inicio:  torneo.fecha_inicio,
+          fecha_fin:     torneo.fecha_fin,
+          estado:        torneo.estado,
+          reglas:        torneo.reglas || '',
         }
       : FORM_INICIAL
   );
+
+  const [categoriasDB, setCategoriasDB] = useState<{id: number, nombre: string, activo: boolean}[]>([]);
+  useEffect(() => {
+    api.get('/categorias').then(setCategoriasDB).catch(console.error);
+  }, []);
+  
   const [errors, setErrors] = useState<Partial<FormTorneo>>({});
 
   const set = (k: keyof FormTorneo, v: string) => {
@@ -183,9 +186,11 @@ function ModalTorneo({
           {/* Categoría + Temporada */}
           <div className="grid grid-cols-2 gap-3">
             <Campo label="Categoría">
-              <select value={form.categoria} onChange={e => set('categoria', e.target.value)}
+              <select value={form.categoria_id} onChange={e => set('categoria_id', e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]">
-                {['Sub-13', 'Sub-15', 'Juvenil', 'Mayor'].map(c => <option key={c}>{c}</option>)}
+                {categoriasDB.filter(c => c.activo !== false).map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
               </select>
             </Campo>
             <Campo label="Temporada">
@@ -326,7 +331,15 @@ function TorneoCard({ torneo, onEditar }: { torneo: Torneo; onEditar: (t: Torneo
 
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function TorneosPage() {
-  const [torneos, setTorneos] = useState<Torneo[]>(mockTorneos);
+  const [torneos, setTorneos] = useState<Torneo[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+  api.get('/torneos')
+    .then(data => setTorneos(data.map(mapearTorneo)))
+    .catch(console.error)
+    .finally(() => setCargando(false));
+}, []);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [torneoEditando, setTorneoEditando] = useState<Torneo | undefined>();
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
@@ -335,37 +348,46 @@ export default function TorneosPage() {
     ? torneos
     : torneos.filter(t => t.estado === filtroEstado);
 
-  const guardarTorneo = (form: FormTorneo) => {
-    const disc = mockDisciplinas.find(d => d.id === Number(form.disciplina_id));
-    if (torneoEditando) {
-      // TODO: PUT /api/torneos/{id}
-      setTorneos(torneos.map(t =>
-        t.id === torneoEditando.id
-          ? {
-              ...t,
-              ...form,
-              disciplina_id: Number(form.disciplina_id),
-              disciplina_nombre: disc?.nombre || '',
-              tipo: form.tipo as Torneo['tipo'],
-              formato: form.formato as Torneo['formato'],
-              estado: form.estado as Torneo['estado'],
-            }
-          : t
-      ));
-    } else {
-      // TODO: POST /api/torneos
-      const nuevo: Torneo = {
-        id: Math.max(...torneos.map(t => t.id)) + 1,
-        ...form,
-        disciplina_id: Number(form.disciplina_id),
-        disciplina_nombre: disc?.nombre || '',
-        tipo: form.tipo as Torneo['tipo'],
-        formato: form.formato as Torneo['formato'],
-        estado: form.estado as Torneo['estado'],
-      };
-      setTorneos([...torneos, nuevo]);
-    }
+const guardarTorneo = async (form: FormTorneo) => {
+  const body = {
+    nombre:       form.nombre,
+    disciplinaId: Number(form.disciplina_id),
+    categoriaId: Number(form.categoria_id),
+    tipo:         form.tipo,
+    formato:      form.formato,
+    temporada:    form.temporada,
+    fechaInicio:  form.fecha_inicio,
+    fechaFin:     form.fecha_fin,
+    estado:       form.estado,
+    reglas:       form.reglas,
   };
+
+  if (torneoEditando) {
+    const actualizado = await api.put(`/torneos/${torneoEditando.id}`, body);
+    setTorneos(torneos.map(t => t.id === torneoEditando.id ? mapearTorneo(actualizado) : t));
+  } else {
+    const nuevo = await api.post('/torneos', body);
+    setTorneos([...torneos, nuevo].map(mapearTorneo));
+  }
+};
+
+  const mapearTorneo = (t: any): Torneo => ({
+  id:                t.id,
+  nombre:            t.nombre,
+  disciplina_id:     t.disciplinaId,
+  disciplina_nombre: t.disciplina?.nombre ?? '',
+  categoria_id:      t.categoriaId, 
+  tipo:              t.tipo,
+  formato:           t.formato,
+  categoria:         t.categoria?.nombre ?? '',
+  temporada:         t.temporada,
+  fecha_inicio:      t.fechaInicio?.split('T')[0],
+  fecha_fin:         t.fechaFin?.split('T')[0],
+  estado:            t.estado,
+  reglas:            t.reglas,
+});
+
+  
 
   const counts = {
     todos: torneos.length,

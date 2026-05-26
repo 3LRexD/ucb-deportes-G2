@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
 import { Plus, Search, Users, ChevronDown, ChevronUp, CheckCircle, XCircle, UserPlus, X, Trophy } from 'lucide-react';
-import { mockEquipos, mockCarreras, mockJugadores } from '@/data/mockData';
+import {mockJugadores } from '@/data/mockData';
 import type { Equipo, Jugador } from '@/types';
 
 // ─── Modal: Crear nuevo equipo 
@@ -8,17 +9,25 @@ function ModalCrearEquipo({ onClose, onCrear }: {
   onClose: () => void;
   onCrear: (equipo: Partial<Equipo>) => void;
 }) {
-  const [form, setForm] = useState({ nombre: '', carrera: '', delegado_nombre: '' });
+  const [form, setForm] = useState({ nombre: '', carreraId: 0, delegado_nombre: '' });
+  const [torneosDB, setTorneosDB] = useState<{id: number, nombre: string}[]>([]);
+  const [torneoId, setTorneoId] = useState<number | ''>('');
+  const [carrerasDB, setCarrerasDB] = useState<{id: number, nombre: string, facultad: string}[]>([]);
+
+  useEffect(() => {
+    api.get('/torneos').then(setTorneosDB).catch(console.error);
+    api.get('/carreras').then(setCarrerasDB).catch(console.error);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.carrera) return;
+    if (!form.carreraId || !torneoId) return;
     onCrear({
-      nombre: form.nombre || `Equipo ${form.carrera}`,
-      carrera: form.carrera,
+      nombre:          form.nombre || `Equipo ${carrerasDB.find(c => c.id === form.carreraId)?.nombre}`,
+      carrera:         carrerasDB.find(c => c.id === form.carreraId)?.nombre ?? '',
       delegado_nombre: form.delegado_nombre,
-      jugadores: [],
-      torneo_id: 1,
+      jugadores:       [],
+      torneo_id:       Number(torneoId),
     });
     onClose();
   };
@@ -35,14 +44,30 @@ function ModalCrearEquipo({ onClose, onCrear }: {
             <label className="block text-sm font-medium text-gray-700 mb-1">Carrera *</label>
             <select
               required
-              value={form.carrera}
-              onChange={e => setForm({ ...form, carrera: e.target.value, nombre: `Equipo ${e.target.value.split(' ')[0]}` })}
+              value={form.carreraId}
+              onChange={e => setForm({ ...form, carreraId: Number(e.target.value) })}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seleccionar carrera...</option>
-              {mockCarreras.map(c => <option key={c} value={c}>{c}</option>)}
+              {carrerasDB.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Torneo *</label>
+            <select
+              required
+              value={torneoId}
+              onChange={e => setTorneoId(Number(e.target.value))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Seleccionar torneo...</option>
+              {torneosDB.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del equipo</label>
             <input
@@ -277,37 +302,59 @@ function EquipoCard({ equipo, onAgregarJugador }: {
 
 // ─── Página principal ─
 export default function EquiposPage() {
-  const [equipos, setEquipos] = useState<Equipo[]>(mockEquipos);
+  const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [modalCrear, setModalCrear] = useState(false);
   const [equipoParaAgregar, setEquipoParaAgregar] = useState<Equipo | null>(null);
+
+  useEffect(() => {
+    api.get('/equipos')
+      .then(data => setEquipos(data.map(mapearEquipo)))
+      .catch(console.error);
+  }, []);
+
+  const mapearEquipo = (e: any): Equipo => ({
+    id:              e.id,
+    nombre:          e.nombre,
+    carrera:         e.carrera?.nombre ?? '',
+    carrera_id:      e.carreraId,        // ← agregar
+    delegado_id:     e.delegadoId ?? 0,
+    delegado_nombre: e.delegadoNombre ?? '',
+    torneo_id:       e.torneoId,
+    jugadores:       e.jugadores?.map((j: any) => ({
+      ci:               j.deportistaCi,
+      nombre_completo:  j.deportistaNombre,
+      tipo:             'UCB' as const,
+      matricula_activa: j.matriculaValidada,
+    })) ?? [],
+  });
 
   const equiposFiltrados = equipos.filter(e =>
     e.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
     e.carrera.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const crearEquipo = (datos: Partial<Equipo>) => {
-    // TODO: reemplazar con POST /api/equipos
-    const nuevo: Equipo = {
-      id: equipos.length + 1,
-      nombre: datos.nombre!,
-      carrera: datos.carrera!,
-      delegado_id: 0,
-      delegado_nombre: datos.delegado_nombre || '',
-      jugadores: [],
-      torneo_id: 1,
-    };
-    setEquipos([...equipos, nuevo]);
+  const crearEquipo = async (datos: Partial<Equipo>) => {
+    const nuevo = await api.post('/equipos', {
+      nombre:    datos.nombre,
+      carreraId: datos.carrera_id,  
+      torneoId:  datos.torneo_id,
+      delegadoId: datos.delegado_id,
+    });
+    setEquipos([...equipos, mapearEquipo(nuevo)]);
   };
 
-  const agregarJugador = (equipoId: number, ci: string) => {
-    // TODO: reemplazar con POST /api/equipos/{id}/jugadores
+  const agregarJugador = async (equipoId: number, ci: string) => {
     const jugador = mockJugadores.find(j => j.ci === ci);
     if (!jugador) return;
-    setEquipos(equipos.map(e =>
-      e.id === equipoId ? { ...e, jugadores: [...e.jugadores, jugador] } : e
-    ));
+    await api.post(`/equipos/${equipoId}/jugadores`, {
+      deportistaId:    0,
+      deportistaCi:    jugador.ci,
+      deportistaNombre: jugador.nombre_completo,
+    });
+    // Refrescar equipos
+    const data = await api.get('/equipos');
+    setEquipos(data.map(mapearEquipo));
   };
 
   return (

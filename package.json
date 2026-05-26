@@ -1,0 +1,29 @@
+{
+  "name": "ucb-deportes-g2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+
+  "scripts": {
+    "front": "cd frontend && npm run dev",
+    "back": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run front\" \"npm run back\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3LRexD/ucb-deportes-G2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3LRexD/ucb-deportes-G2/issues"
+  },
+  "homepage": "https://github.com/3LRexD/ucb-deportes-G2#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

@@ -1,12 +1,3 @@
-// ============================================================
-// DATOS MOCK — reemplazar con llamadas reales a la API
-// cuando el backend esté listo
-// 
-// Patrón sugerido para conectar:
-//   import { equiposService } from '@/services/equipos.service';
-//   const equipos = await equiposService.getAll();
-// ============================================================
-
 import type { Equipo, Jugador, Torneo, Usuario, Disciplina, Partido } from '@/types';
 
 export const mockUsuarioAdmin: Usuario = {
@@ -160,14 +151,36 @@ export const mockEquipos: Equipo[] = [
 ];
 
 export const mockCarreras = [
-  'Ingeniería de Sistemas',
-  'Derecho',
   'Administración de Empresas',
-  'Medicina',
-  'Arquitectura',
-  'Ingeniería Civil',
+  'Administración Turística',
+  'Contaduría Pública',
   'Economía',
-  'Psicología',
-  'Comunicación Social',
+  'Economía e Inteligencia de Negocios',
+  'Ingeniería Comercial',
+  'Ingeniería en Innovación Empresarial',
+  'Marketing y Medios Digitales',
+  'Ingeniería Ambiental',
+  'Ingeniería Biomédica',
+  'Ingeniería Bioquímica y de Bioprocesos',
+  'Ingeniería Civil',
+  'Ingeniería de Sistemas',
+  'Ingeniería en Logística de Cadenas de Suministro',
+  'Ingeniería en Multimedia e Interactividad Digital',
   'Ingeniería Industrial',
+  'Ingeniería Química',
+  'Ingeniería Mecatrónica',
+  'Ingeniería en Telecomunicaciones',
+  'Comunicación Social',
+  'Comunicación Digital Multimedia',
+  'Psicología',
+  'Psicopedagogía',
+  'Ciencias Políticas y Relaciones Internacionales',
+  'Derecho',
+  'Arquitectura',
+  'Diseño Digital',
+  'Diseño Gráfico y Comunicación Visual',
+  'Medicina',
+  'Nutrición Clínica y Dietética',
+  'Antropología',
+  'Filosofía y Letras',
 ];

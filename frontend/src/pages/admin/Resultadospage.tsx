@@ -1,9 +1,7 @@
-import { useState } from 'react';
-import {
-  CheckCircle, Clock, X, Plus, Minus,
-  ShieldAlert, Circle, AlertTriangle,
-} from 'lucide-react';
-import { mockPartidos, mockEquipos, mockJugadores } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import {CheckCircle, Clock, X, Plus, Minus, ShieldAlert, Circle, AlertTriangle,} from 'lucide-react';
+import {mockEquipos, mockJugadores } from '@/data/mockData';
 import type { Partido, EventoPartido } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -373,7 +371,7 @@ function PartidoCard({ partido, onRegistrar }: { partido: Partido; onRegistrar: 
 
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function ResultadosPage() {
-  const [partidos, setPartidos] = useState<Partido[]>(mockPartidos);
+  const [partidos, setPartidos] = useState<Partido[]>([]);
   const [partidoActivo, setPartidoActivo] = useState<Partido | null>(null);
   const [filtro, setFiltro] = useState<string>('todos');
 
@@ -384,8 +382,53 @@ export default function ResultadosPage() {
   const pendientes = partidos.filter(p => p.estado === 'programado').length;
   const finalizados = partidos.filter(p => p.estado === 'finalizado').length;
 
-  const actualizarPartido = (actualizado: Partido) => {
-    setPartidos(partidos.map(p => p.id === actualizado.id ? actualizado : p));
+  useEffect(() => {
+    api.get('/partidos')
+      .then(data => setPartidos(data.map(mapearPartido)))
+      .catch(console.error);
+  }, []);
+
+  const mapearPartido = (p: any): Partido => ({
+    id:                    p.id,
+    torneo_id:             p.torneoId,
+    torneo_nombre:         p.torneo?.nombre ?? '',
+    equipo_local_id:       p.equipoLocalId,
+    equipo_local_nombre:   p.equipoLocal?.nombre ?? '',
+    equipo_visitante_id:   p.equipoVisitanteId,
+    equipo_visitante_nombre: p.equipoVisitante?.nombre ?? '',
+    fecha:                 p.fecha?.split('T')[0],
+    hora:                  p.hora,
+    jornada:               p.jornada,
+    fase:                  p.fase,
+    estado:                p.estado,
+    goles_local:           p.golesLocal,
+    goles_visitante:       p.golesVisitante,
+    eventos:               p.estadisticas?.map((e: any) => ({
+      id:               e.id,
+      tipo:             e.tipo,
+      deportista_ci:    e.deportistaCi,
+      deportista_nombre: e.deportistaNombre,
+      equipo_id:        e.equipoId,
+      minuto:           e.minuto,
+    })) ?? [],
+  });
+
+  const actualizarPartido = async (actualizado: Partido) => {
+    await api.put(`/partidos/${actualizado.id}`, {
+      golesLocal:     actualizado.goles_local,
+      golesVisitante: actualizado.goles_visitante,
+      estado:         actualizado.estado,
+      estadisticas:   actualizado.eventos.map(e => ({
+        equipoId:        e.equipo_id,
+        deportistaId:    0,
+        deportistaCi:    e.deportista_ci,
+        deportistaNombre: e.deportista_nombre,
+        tipo:            e.tipo,
+        minuto:          e.minuto,
+      })),
+    });
+    const data = await api.get('/partidos');
+    setPartidos(data.map(mapearPartido));
   };
 
   return (
