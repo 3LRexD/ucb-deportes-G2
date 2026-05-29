@@ -1,60 +1,37 @@
 import { Request, Response } from 'express';
+
 import { categoriasService } from '../services/categorias.service';
 
-export class CategoriasController {
-  async getCategorias(_req: Request, res: Response) {
+export const categoriasController = {
+  async getAll(req: Request, res: Response) {
     try {
-      const categorias = await categoriasService.getCategorias();
-      res.json(categorias);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al obtener categorías' });
-    }
-  }
-
-  async createCategoria(req: Request, res: Response) {
+      const soloActivas = req.query.activas === 'true';
+      const data = await categoriasService.getAll(soloActivas);
+      res.json({ ok: true, data });
+    } catch (err: any) { res.status(500).json({ ok: false, error: err.message }); }
+  },
+ 
+  async getById(req: Request, res: Response) {
     try {
-      const { nombre, edadMin, edadMax, descripcion, activo } = req.body;
-      const categoria = await categoriasService.createCategoria({
-        nombre,
-        edadMin: Number(edadMin),
-        edadMax: Number(edadMax),
-        descripcion,
-        activo
-      });
-      res.status(201).json(categoria);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al crear categoría' });
-    }
-  }
-
-  async updateCategoria(req: Request, res: Response) {
+      const data = await categoriasService.getById(Number(req.params.id));
+      if (!data) return res.status(404).json({ ok: false, error: 'No encontrado' });
+      res.json({ ok: true, data });
+    } catch (err: any) { res.status(500).json({ ok: false, error: err.message }); }
+  },
+ 
+  async create(req: Request, res: Response) {
     try {
-      const { nombre, edadMin, edadMax, descripcion, activo } = req.body;
-      const categoria = await categoriasService.updateCategoria(Number(req.params.id), {
-        nombre,
-        edadMin: Number(edadMin),
-        edadMax: Number(edadMax),
-        descripcion,
-        activo
-      });
-      res.json(categoria);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al actualizar categoría' });
-    }
-  }
-
-  async toggleCategoria(req: Request, res: Response) {
+      const data = await categoriasService.create(req.body);
+      res.status(201).json({ ok: true, data });
+    } catch (err: any) { res.status(400).json({ ok: false, error: err.message }); }
+  },
+ 
+  async update(req: Request, res: Response) {
     try {
-      const categoria = await categoriasService.toggleCategoria(Number(req.params.id));
-      if (!categoria) {
-        res.status(404).json({ error: 'Categoría no encontrada' });
-        return;
-      }
-      res.json(categoria);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al actualizar categoría' });
-    }
-  }
-}
-
-export const categoriasController = new CategoriasController();
+      const data = await categoriasService.update(Number(req.params.id), req.body);
+      if (!data) return res.status(404).json({ ok: false, error: 'No encontrado' });
+      res.json({ ok: true, data });
+    } catch (err: any) { res.status(400).json({ ok: false, error: err.message }); }
+  },
+};
+ 

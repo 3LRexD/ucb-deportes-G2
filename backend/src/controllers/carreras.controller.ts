@@ -1,15 +1,12 @@
 import { Request, Response } from 'express';
-import { carrerasService } from '../services/carreras.service';
+import * as carrerasService from '../services/carreras.service';
 
-export class CarrerasController {
-  async getCarreras(req: Request, res: Response) {
-    try {
-      const carreras = await carrerasService.getActiveCarreras();
-      res.json(carreras);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al obtener carreras' });
-    }
+export async function getCarreras(req: Request, res: Response): Promise<void> {
+  try {
+    const carreras = await carrerasService.getAllCarreras();
+    res.json(carreras);
+  } catch (error) {
+    console.error('[carreras] Error al obtener carreras:', error);
+    res.status(500).json({ error: 'Error interno al obtener carreras' });
   }
 }
-
-export const carrerasController = new CarrerasController();

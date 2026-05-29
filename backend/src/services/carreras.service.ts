@@ -1,12 +1,18 @@
-import prisma from '../prisma';
+import pool from '../utils/db';
 
-export class CarrerasService {
-  async getActiveCarreras() {
-    return await prisma.carrera.findMany({
-      where:   { activo: true },
-      orderBy: { nombre: 'asc' },
-    });
-  }
+export interface Carrera {
+  id_carrera: number;
+  nombre: string;
+  facultad: string;
+  activo: boolean;
 }
 
-export const carrerasService = new CarrerasService();
+export async function getAllCarreras(): Promise<Carrera[]> {
+  const result = await pool.query<Carrera>(`
+    SELECT id_carrera, nombre, facultad, activo
+    FROM carreras
+    WHERE activo = true
+    ORDER BY nombre ASC
+  `);
+  return result.rows;
+}

@@ -3,10 +3,12 @@ import { torneosController } from '../controllers/torneos.controller';
 
 const router = Router();
 
-router.get('/', torneosController.getTorneos);
-router.get('/:id', torneosController.getTorneoById);
-router.post('/', torneosController.createTorneo);
-router.put('/:id', torneosController.updateTorneo);
-router.patch('/:id/estado', torneosController.updateEstado);
+router.get('/',          torneosController.getAll);
+router.post('/',         torneosController.create);
+router.get('/:id',       torneosController.getById);
+router.put('/:id',       torneosController.update);
+router.delete('/:id',    torneosController.delete);
+router.patch('/:id/estado', torneosController.cambiarEstado);
+router.get('/:id/tabla-posiciones', torneosController.getTablasPosiciones);
 
 export default router;

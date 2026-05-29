@@ -105,7 +105,7 @@ export default function Header({
       {role === "delegado" && carrera && (
         <div className="bg-amber-50 border-b border-amber-200/70 px-6 py-1.5">
           <p className="text-xs text-amber-700 flex items-center gap-1.5">
-            <span>🏅</span>
+            <span></span>
             Delegado de{" "}
             <strong className="font-semibold text-amber-800">{carrera}</strong>
             <span className="text-amber-300 mx-1">·</span>

@@ -4,10 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-
-  "scripts": {
     "front": "cd frontend && npm run dev",
     "back": "cd backend && npm run dev",
     "dev": "concurrently \"npm run front\" \"npm run back\""
@@ -24,6 +20,10 @@
   },
   "homepage": "https://github.com/3LRexD/ucb-deportes-G2#readme",
   "devDependencies": {
+    "@types/pg": "^8.20.0",
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "pg": "^8.21.0"
   }
 }

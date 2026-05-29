@@ -1,48 +1,50 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AdminLayout from '@/components/layout/AdminLayout';
+import AdminLayout    from '@/components/layout/AdminLayout';
 import DelegadoLayout from '@/components/layout/DelegadoLayout';
 import EquiposPage    from '@/pages/admin/EquiposPage';
-import MiEquipoPage  from '@/pages/delegado/MiEquipoPage';
+import MiEquipoPage   from '@/pages/delegado/MiEquipoPage';
 import TorneosPage    from '@/pages/admin/TorneosPage';
-import ResultadosPage from '@/pages/admin/Resultadospage';
-import FixturesPage   from '@/pages/admin/FixturesPage';
-import AsistenciaPage from '@/pages/admin/AsistenciaPage';
-import CategoriasPage from '@/pages/admin/CategoriasPage';
+import ResultadosPage from '@/pages/admin/ResultadosPage';
+import FixturePage    from '@/pages/admin/FixturePage';
+import AsistenciaPage from './pages/admin/AsistenciaPage';
 
+
+// ── Placeholder para rutas futuras ────────────────────────────────────────────
 const Placeholder = ({ titulo }: { titulo: string }) => (
-  <div className="flex items-center justify-center h-64">
-    <div className="text-center text-gray-400">
-      <p className="text-lg font-semibold">{titulo}</p>
-      <p className="text-sm">Próximamente en el Sprint 4 ó 5</p>
-    </div>
+  <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+    <p className="text-lg font-semibold">{titulo}</p>
+    <p className="text-sm mt-1">Próximamente en un sprint futuro</p>
   </div>
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/admin/torneos" replace />} />
+
+        {/* ── Zona Admin ─────────────────────────────────────────────────── */}
         <Route
           path="/admin/*"
           element={
             <AdminLayout>
               <Routes>
-                <Route path="equipos"     element={<EquiposPage />} />
-                <Route path="torneos"     element={<TorneosPage />} />
-                <Route path="resultados"  element={<ResultadosPage />} />
-                <Route path="fixtures"    element={<FixturesPage />} />
-                <Route path="asistencia"  element={<AsistenciaPage />} />
-                <Route path="categorias"  element={<CategoriasPage />} />
-                <Route path="tabla"       element={<Placeholder titulo="Tabla de Posiciones" />} />
-                <Route path="calendario"  element={<Placeholder titulo="Calendario" />} />
-                <Route path="config"      element={<Placeholder titulo="Configuración" />} />
-                <Route path="*"           element={<Navigate to="torneos" replace />} />
+                <Route path="equipos"    element={<EquiposPage />} />
+                <Route path="torneos"    element={<TorneosPage />} />
+                <Route path="resultados" element={<ResultadosPage />} />
+                <Route path="fixtures"   element={<FixturePage />} />
+                <Route path="asistencia" element={<AsistenciaPage />} />
+                <Route path="tabla"      element={<Placeholder titulo="Tabla de Posiciones" />} />
+                <Route path="calendario" element={<Placeholder titulo="Calendario" />} />
+                <Route path="config"     element={<Placeholder titulo="Configuración" />} />
+                <Route path="*"          element={<Navigate to="torneos" replace />} />
               </Routes>
             </AdminLayout>
           }
         />
 
+        {/* ── Zona Delegado ───────────────────────────────────────────────── */}
         <Route
           path="/delegado/*"
           element={

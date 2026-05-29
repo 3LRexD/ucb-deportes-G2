@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: "/admin/tabla",      label: "Tabla",      icon: Table2 },
   { path: "/admin/calendario", label: "Calendario", icon: CalendarDays },
   { path: "/admin/config",     label: "Config",     icon: Settings },
+  
 ];
 
 interface AdminLayoutProps {

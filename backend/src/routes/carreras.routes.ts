@@ -1,8 +1,7 @@
 import { Router } from 'express';
-import { carrerasController } from '../controllers/carreras.controller';
+import { getCarreras } from '../controllers/carreras.controller';
 
 const router = Router();
-
-router.get('/', carrerasController.getCarreras);
+router.get('/', getCarreras);
 
 export default router;

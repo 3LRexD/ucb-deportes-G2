@@ -1,11 +1,10 @@
-import { Router } from 'express';
-import { categoriasController } from '../controllers/categorias.controller';
+import { Router } from "express";
+import { categoriasController } from "../controllers/categorias.controller";
 
-const router = Router();
+const catRouter = Router();
+catRouter.get('/',     categoriasController.getAll);
+catRouter.post('/',    categoriasController.create);
+catRouter.get('/:id',  categoriasController.getById);
+catRouter.put('/:id',  categoriasController.update);
 
-router.get('/', categoriasController.getCategorias);
-router.post('/', categoriasController.createCategoria);
-router.put('/:id', categoriasController.updateCategoria);
-router.patch('/:id/toggle', categoriasController.toggleCategoria);
-
-export default router;
+export const categoriasRouter = catRouter;

@@ -1,79 +1,80 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, UserPlus, Trophy } from 'lucide-react';
-import type { Equipo } from '@/types';
+import type { Equipo } from "@/types/equipos.types";
 
-export function EquipoCard({ equipo, onAgregarJugador }: {
+
+interface Props {
   equipo: Equipo;
-  onAgregarJugador: (equipo: Equipo) => void;
-}) {
-  const [expandido, setExpandido] = useState(false);
+  activo: boolean;
+  onClick: () => void;
+}
+
+export default function EquipoCard({ equipo, activo, onClick }: Props) {
+  const tieneDelegado = equipo.delegado !== null;
+  const totalJugadores = equipo.jugadores.length;
+  const validados = equipo.jugadores.filter((j) => j.matricula_validada).length;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <button
-        onClick={() => setExpandido(!expandido)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#1a3a6b]/10 rounded-xl flex items-center justify-center">
-            <Trophy size={18} className="text-[#1a3a6b]" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-800">{equipo.nombre}</p>
-            <p className="text-xs text-gray-500">{equipo.carrera}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-gray-700">{equipo.jugadores.length} jugadores</p>
-            <p className="text-xs text-gray-400">Delegado: {equipo.delegado_nombre || 'Sin asignar'}</p>
-          </div>
-          {expandido ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-        </div>
-      </button>
-
-      {expandido && (
-        <div className="border-t border-gray-100 px-5 py-4">
-          {equipo.jugadores.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">Sin jugadores inscritos aún.</p>
-          ) : (
-            <table className="w-full text-sm mb-4">
-              <thead>
-                <tr className="text-xs text-gray-400 uppercase tracking-wide">
-                  <th className="text-left pb-2">CI</th>
-                  <th className="text-left pb-2">Nombre</th>
-                  <th className="text-left pb-2">Tipo</th>
-                  <th className="text-left pb-2">Matrícula</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {equipo.jugadores.map(j => (
-                  <tr key={j.ci} className="hover:bg-gray-50">
-                    <td className="py-2 font-mono text-xs text-gray-500">{j.ci}</td>
-                    <td className="py-2 font-medium text-gray-800">{j.nombre_completo}</td>
-                    <td className="py-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        j.tipo === 'UCB' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                      }`}>{j.tipo}</span>
-                    </td>
-                    <td className="py-2">
-                      {j.matricula_activa
-                        ? <CheckCircle size={14} className="text-green-500" />
-                        : <XCircle size={14} className="text-red-400" />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <button
-            onClick={() => onAgregarJugador(equipo)}
-            className="flex items-center gap-2 text-sm text-[#1a3a6b] hover:text-blue-800 font-medium"
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-4 rounded-xl border transition-all duration-200 group ${
+        activo
+          ? "bg-[#0a1628] border-[#1e3a5f] shadow-lg"
+          : "bg-white border-gray-200 hover:border-[#1e3a5f] hover:shadow-md"
+      }`}
+    >
+      {/* Nombre y carrera */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p
+            className={`font-semibold text-sm truncate ${
+              activo ? "text-white" : "text-gray-800"
+            }`}
           >
-            <UserPlus size={14} /> Agregar jugador por CI
-          </button>
+            {equipo.nombre}
+          </p>
+          {equipo.carrera_nombre && (
+            <p
+              className={`text-xs mt-0.5 truncate ${
+                activo ? "text-blue-300" : "text-gray-500"
+              }`}
+            >
+              {equipo.carrera_nombre}
+            </p>
+          )}
         </div>
-      )}
-    </div>
+
+        {/* Indicador de estado */}
+        <span
+          className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
+            tieneDelegado
+              ? activo
+                ? "bg-green-900 text-green-300"
+                : "bg-green-100 text-green-700"
+              : activo
+              ? "bg-yellow-900 text-yellow-300"
+              : "bg-yellow-100 text-yellow-700"
+          }`}
+        >
+          {tieneDelegado ? "Completo" : "Sin delegado"}
+        </span>
+      </div>
+
+      {/* Stats */}
+      <div className={`mt-3 flex items-center gap-4 text-xs ${activo ? "text-blue-200" : "text-gray-500"}`}>
+        <span className="flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
+          </svg>
+          {totalJugadores} jugador{totalJugadores !== 1 ? "es" : ""}
+        </span>
+        {totalJugadores > 0 && (
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {validados}/{totalJugadores} validados
+          </span>
+        )}
+      </div>
+    </button>
   );
 }

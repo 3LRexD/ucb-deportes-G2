@@ -1,79 +1,78 @@
 import { Request, Response } from 'express';
 import { torneosService } from '../services/torneos.service';
 
-export class TorneosController {
-  async getTorneos(_req: Request, res: Response) {
-    try {
-      const torneos = await torneosService.getTorneos();
-      res.json(torneos);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al obtener torneos' });
-    }
-  }
+export const torneosController = {
 
-  async getTorneoById(req: Request, res: Response) {
+  async getAll(req: Request, res: Response) {
     try {
-      const torneo = await torneosService.getTorneoById(Number(req.params.id));
-      if (!torneo) {
-        res.status(404).json({ error: 'Torneo no encontrado' });
-        return;
-      }
-      res.json(torneo);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al obtener torneo' });
-    }
-  }
-
-  async createTorneo(req: Request, res: Response) {
-    try {
-      const { nombre, disciplinaId, categoriaId, tipo, formato, temporada, fechaInicio, fechaFin, estado, reglas } = req.body;
-      const torneo = await torneosService.createTorneo({
-        nombre,
-        disciplinaId: Number(disciplinaId),
-        categoriaId: Number(categoriaId),
-        tipo,
-        formato,
-        temporada,
-        fechaInicio: new Date(fechaInicio),
-        fechaFin: new Date(fechaFin),
-        estado,
-        reglas
+      const { estado, disciplina_id, tipo } = req.query;
+      const torneos = await torneosService.getAll({
+        estado: estado as string,
+        disciplina_id: disciplina_id ? Number(disciplina_id) : undefined,
+        tipo: tipo as string,
       });
-      res.status(201).json(torneo);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al crear torneo' });
+      res.json({ ok: true, data: torneos });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, error: err.message });
     }
-  }
+  },
 
-  async updateTorneo(req: Request, res: Response) {
+  async getById(req: Request, res: Response) {
     try {
-      const { nombre, disciplinaId, categoriaId, tipo, formato, temporada, fechaInicio, fechaFin, estado, reglas } = req.body;
-      const torneo = await torneosService.updateTorneo(Number(req.params.id), {
-        nombre,
-        disciplinaId: disciplinaId ? Number(disciplinaId) : undefined,
-        categoriaId: categoriaId ? Number(categoriaId) : undefined,
-        tipo,
-        formato,
-        temporada,
-        fechaInicio: fechaInicio ? new Date(fechaInicio) : undefined,
-        fechaFin: fechaFin ? new Date(fechaFin) : undefined,
-        estado,
-        reglas
-      });
-      res.json(torneo);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al actualizar torneo' });
+      const torneo = await torneosService.getById(Number(req.params.id));
+      if (!torneo) return res.status(404).json({ ok: false, error: 'Torneo no encontrado' });
+      res.json({ ok: true, data: torneo });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, error: err.message });
     }
-  }
+  },
 
-  async updateEstado(req: Request, res: Response) {
+  async create(req: Request, res: Response) {
     try {
-      const torneo = await torneosService.updateEstado(Number(req.params.id), req.body.estado);
-      res.json(torneo);
-    } catch (error) {
-      res.status(500).json({ error: 'Error al actualizar estado' });
+      const torneo = await torneosService.create(req.body);
+      res.status(201).json({ ok: true, data: torneo });
+    } catch (err: any) {
+      res.status(400).json({ ok: false, error: err.message });
     }
-  }
-}
+  },
 
-export const torneosController = new TorneosController();
+  async update(req: Request, res: Response) {
+    try {
+      const torneo = await torneosService.update(Number(req.params.id), req.body);
+      if (!torneo) return res.status(404).json({ ok: false, error: 'Torneo no encontrado' });
+      res.json({ ok: true, data: torneo });
+    } catch (err: any) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  },
+
+  async delete(req: Request, res: Response) {
+    try {
+      const result = await torneosService.delete(Number(req.params.id));
+      if (!result) return res.status(400).json({ ok: false, error: 'Solo se pueden eliminar torneos en estado planificado' });
+      res.json({ ok: true, message: 'Torneo eliminado' });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  },
+
+  async cambiarEstado(req: Request, res: Response) {
+    try {
+      const { estado } = req.body;
+      const torneo = await torneosService.cambiarEstado(Number(req.params.id), estado);
+      if (!torneo) return res.status(404).json({ ok: false, error: 'Torneo no encontrado' });
+      res.json({ ok: true, data: torneo });
+    } catch (err: any) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  },
+
+  async getTablasPosiciones(req: Request, res: Response) {
+    try {
+      const tabla = await torneosService.getTablasPosiciones(Number(req.params.id));
+      res.json({ ok: true, data: tabla });
+    } catch (err: any) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  },
+};
